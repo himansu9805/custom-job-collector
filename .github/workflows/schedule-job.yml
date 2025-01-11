@@ -24,6 +24,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
     
+      - name: Create logs directory
+        run: mkdir -p logs
+
       - name: Decode LinkedIn Cookies
         run: |
           echo "${{ secrets.LINKEDIN_COOKIES_B64 }}" | base64 -d > linkedin_cookies.json
