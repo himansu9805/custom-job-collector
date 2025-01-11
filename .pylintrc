@@ -1,0 +1,1 @@
+init-hook='import sys; sys.path.append(/home/himansu/workspace/custom-job-collector/custom_job_collector)'

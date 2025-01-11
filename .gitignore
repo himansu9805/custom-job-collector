@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+logs/
+*.log
+
+linkedin_cookies.json
+linkedin_cookies.b64
+
+tmp/
