@@ -1,7 +1,10 @@
+""" Email handler module to send emails with attachments. """
+
 import smtplib
+import ssl
+from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email.mime.application import MIMEApplication
 from email.utils import formatdate
 import logging
 import os
@@ -21,18 +24,6 @@ class EmailHandler:
         self.smtp_password = const.SMTP_PASSWORD
         self.from_email = const.FROM_EMAIL
         self.to_email = const.TO_EMAIL
-        self.server = None
-
-    def connect(self):
-        """Establishes connection to the email server."""
-        try:
-            self.server = smtplib.SMTP(self.smtp_server, self.smtp_port)
-            self.server.starttls()
-            self.server.login(self.smtp_user, self.smtp_password)
-            logging.info("Successfully connected to the email server.")
-        except Exception as e:
-            logging.error(f"Failed to connect: {e}")
-            raise e
 
     def send_email(
         self, subject, jobs: list[models.Job], attachment_path=None
@@ -45,10 +36,6 @@ class EmailHandler:
             jobs (list[models.Job]): A list of collected jobs.
             attachment_path (str): The path to the attachment file.
         """
-        if self.server is None:
-            logging.warning("Server not connected, attempting to connect...")
-            self.connect()
-
         msg = MIMEMultipart()
         msg["From"] = self.from_email
         msg["To"] = self.to_email
@@ -69,16 +56,20 @@ class EmailHandler:
                 )
                 msg.attach(attachment)
 
+        # Secure connection and send email
+        context = ssl.create_default_context()
         try:
-            self.server.sendmail(
-                self.from_email, self.to_email, msg.as_string()
-            )
-            logging.info("Email sent successfully")
+            with smtplib.SMTP_SSL(
+                self.smtp_server, self.smtp_port, context=context
+            ) as server:
+                server.login(self.smtp_user, self.smtp_password)
+                server.sendmail(
+                    self.from_email, self.to_email, msg.as_string()
+                )
+                logging.info("Email sent successfully")
         except Exception as e:
             logging.error("An error occurred while sending the email: %s", e)
             raise e
-        finally:
-            self.server.quit()
 
     def generate_html_body(self, jobs: list[models.Job]) -> str:
         """
@@ -154,8 +145,8 @@ class EmailHandler:
             <p class="intro">
                 We've gathered the most recent job opportunities for you. This
                 is part of our regular job collection process, so you can
-                always expect fresh listings in these emails. Below you'll find
-                the latest job openings from LinkedIn.
+                always expect fresh listings in these emails. Below you'll
+                find the latest job openings from LinkedIn.
             </p>
 
             <h3>Job Listings</h3>
