@@ -1,5 +1,3 @@
-""" Email Handler Module """
-
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -23,6 +21,18 @@ class EmailHandler:
         self.smtp_password = const.SMTP_PASSWORD
         self.from_email = const.FROM_EMAIL
         self.to_email = const.TO_EMAIL
+        self.server = None
+
+    def connect(self):
+        """Establishes connection to the email server."""
+        try:
+            self.server = smtplib.SMTP(self.smtp_server, self.smtp_port)
+            self.server.starttls()
+            self.server.login(self.smtp_user, self.smtp_password)
+            logging.info("Successfully connected to the email server.")
+        except Exception as e:
+            logging.error(f"Failed to connect: {e}")
+            raise e
 
     def send_email(
         self, subject, jobs: list[models.Job], attachment_path=None
@@ -35,6 +45,10 @@ class EmailHandler:
             jobs (list[models.Job]): A list of collected jobs.
             attachment_path (str): The path to the attachment file.
         """
+        if self.server is None:
+            logging.warning("Server not connected, attempting to connect...")
+            self.connect()
+
         msg = MIMEMultipart()
         msg["From"] = self.from_email
         msg["To"] = self.to_email
@@ -56,19 +70,20 @@ class EmailHandler:
                 msg.attach(attachment)
 
         try:
-            server = smtplib.SMTP(self.smtp_server, self.smtp_port)
-            server.starttls()
-            server.login(self.smtp_user, self.smtp_password)
-            server.sendmail(self.from_email, self.to_email, msg.as_string())
-            server.quit()
+            self.server.sendmail(
+                self.from_email, self.to_email, msg.as_string()
+            )
             logging.info("Email sent successfully")
         except Exception as e:
             logging.error("An error occurred while sending the email: %s", e)
             raise e
+        finally:
+            self.server.quit()
 
     def generate_html_body(self, jobs: list[models.Job]) -> str:
         """
-        Generate an HTML table for the list of jobs.
+        Generate an HTML table for the list of jobs, along with information
+        about the scheduled job.
 
         Args:
             jobs (List[Job]): A list of collected jobs.
@@ -93,6 +108,7 @@ class EmailHandler:
             </tr>
             """
 
+        # Adding friendly introductory and summary information
         html_body = f"""
         <html>
         <head>
@@ -120,24 +136,57 @@ class EmailHandler:
                     color: #3498db;
                     text-decoration: none;
                 }}
+                h2 {{
+                    color: #2c3e50;
+                }}
+                .intro {{
+                    background-color: #ecf0f1;
+                    padding: 15px;
+                    border-radius: 5px;
+                    margin-bottom: 20px;
+                    font-size: 14px;
+                    color: #34495e;
+                }}
             </style>
         </head>
         <body>
-            <h2>Collected Job Listings</h2>
+            <h2>Here are the Latest Job Listings for You!</h2>
+            <p class="intro">
+                We've gathered the most recent job opportunities for you. This
+                is part of our regular job collection process, so you can
+                always expect fresh listings in these emails. Below you'll find
+                the latest job openings from LinkedIn.
+            </p>
+
+            <h3>Job Listings</h3>
             <table>
                 <thead>
                     <tr>
-                        <th>Title</th>
+                        <th>Job Title</th>
                         <th>Company</th>
                         <th>Location</th>
                         <th>Link</th>
-                        <th>Posted Date</th>
+                        <th>Posted On</th>
                     </tr>
                 </thead>
                 <tbody>
                     {table_rows}
                 </tbody>
             </table>
+
+            <p>
+                These listings are updated automatically, so you'll always
+                receive the latest opportunities directly in your inbox.
+                Feel free to click the job titles to learn more and apply.
+            </p>
+
+            <footer>
+                <p>
+                    <small>
+                        This email is part of our regular job update service.
+                    </small>
+                </p>
+            </footer>
         </body>
         </html>
         """
