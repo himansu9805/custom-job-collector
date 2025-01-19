@@ -32,6 +32,13 @@ jobs:
           echo "${{ secrets.LINKEDIN_COOKIES_B64 }}" | base64 -d > linkedin_cookies.json
 
       - name: Run LinkedIn Job Scraper
+        env:
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+          TO_EMAIL: ${{ secrets.TO_EMAIL }}
         run: |
           python -m custom_job_collector.main
     
