@@ -30,11 +30,6 @@ jobs:
       - name: Decode LinkedIn Cookies
         run: |
           echo "${{ secrets.LINKEDIN_COOKIES_B64 }}" | base64 -d > linkedin_cookies.json
-      
-      - name: SMTP Server Configuration
-        run: |
-          echo "SMTP_SERVER: ${{ env.SMTP_SERVER }}"
-          echo "SMTP_PORT: ${{ env.SMTP_PORT }}"
 
       - name: Run LinkedIn Job Scrapper
         env:
