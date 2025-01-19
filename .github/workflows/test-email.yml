@@ -6,6 +6,7 @@ on:
 jobs:
   test-email:
     runs-on: ubuntu-latest
+    environment: scrapper
 
     steps:
       - name: Checkout repository
@@ -22,5 +23,12 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Send Email
+        env:
+            SMTP_SERVER: ${{ env.SMTP_SERVER }}
+            SMTP_PORT: ${{ env.SMTP_PORT }}
+            SMTP_USER: ${{ env.SMTP_USER }}
+            SMTP_PASSWORD: ${{ env.SMTP_PASSWORD }}
+            FROM_EMAIL: ${{ env.FROM_EMAIL }}
+            TO_EMAIL: ${{ env.TO_EMAIL }}
         run: |
           python -m custom_job_collector.lib.email_handler

@@ -31,7 +31,7 @@ jobs:
         run: |
           echo "${{ secrets.LINKEDIN_COOKIES_B64 }}" | base64 -d > linkedin_cookies.json
 
-      - name: Run LinkedIn Job Scraper
+      - name: Run LinkedIn Job Scrapper
         env:
           SMTP_SERVER: ${{ env.SMTP_SERVER }}
           SMTP_PORT: ${{ env.SMTP_PORT }}
