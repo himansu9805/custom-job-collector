@@ -24,6 +24,7 @@ class EmailHandler:
         self.smtp_password = const.SMTP_PASSWORD
         self.from_email = const.FROM_EMAIL
         self.to_email = const.TO_EMAIL
+        self.context = ssl.create_default_context()
 
     def send_email(
         self, subject, jobs: list[models.Job], attachment_path=None
@@ -56,12 +57,15 @@ class EmailHandler:
                 )
                 msg.attach(attachment)
 
-        # Secure connection and send email
-        context = ssl.create_default_context()
         try:
             with smtplib.SMTP_SSL(
-                self.smtp_server, self.smtp_port, context=context
+                self.smtp_server, self.smtp_port, context=self.context
             ) as server:
+                logging.info(
+                    "Logging in to: %s:%s",
+                    self.smtp_server,
+                    self.smtp_port,
+                )
                 server.login(self.smtp_user, self.smtp_password)
                 server.sendmail(
                     self.from_email, self.to_email, msg.as_string()
@@ -182,3 +186,31 @@ class EmailHandler:
         </html>
         """
         return html_body
+
+
+def main():
+    """Main function to run the LinkedIn job scraper."""
+    email_agent = EmailHandler()
+    email_agent.send_email(
+        subject="[Test Email] Sample LinkedIn Job Listings",
+        jobs=[
+            models.Job(
+                title="Software Engineer",
+                company="Tech Company",
+                location="San Francisco, CA",
+                link="https://www.example.com/job1",
+                posted_date=None,
+            ),
+            models.Job(
+                title="Data Analyst",
+                company="Data Co",
+                location="New York, NY",
+                link="https://www.example.com/job2",
+                posted_date=None,
+            ),
+        ],
+    )
+
+
+if __name__ == "__main__":
+    main()

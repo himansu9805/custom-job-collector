@@ -9,3 +9,5 @@ linkedin_cookies.json
 linkedin_cookies.b64
 
 tmp/
+
+.env
